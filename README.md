@@ -1,8 +1,8 @@
 # GTA VI boarding pass — delayed 4,811 days
 
-![bounty](https://make.fun/badge/gta6-meme-x-01.svg)
-![rank](https://make.fun/badge/gta6-meme-x-01/ahh955/Gta6-meme-x/rank.svg)
-![reward](https://make.fun/badge/gta6-meme-x-01/ahh955/Gta6-meme-x/reward.svg)
+[![make.fun · gta6-meme-x-01](https://make.fun/badge/gta6-meme-x-01.svg)](https://make.fun/bounty/gta6-meme-x-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-meme-x-01)
+[![rank](https://make.fun/badge/gta6-meme-x-01/ahh955/Gta6-meme-x/rank.svg)](https://make.fun/bounty/gta6-meme-x-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=gta6-meme-x-01)
+[![reward](https://make.fun/badge/gta6-meme-x-01/ahh955/Gta6-meme-x/reward.svg)](https://make.fun/bounty/gta6-meme-x-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-meme-x-01)
 
 Entry for the make.fun bounty **gta6-meme-x-01 — "Post a GTA 6 meme on X"**
 ($500, 50 places). The meme is a fake official document in the format the
@@ -34,7 +34,7 @@ airline's logo in the header and on the tear-off stub.
   https://make.fun/press (press kit, edition 2026-11-02)
 - `main.ts` — entrypoint: copies `POST.json` to `$MAKEFUN_OUTPUT_DIR`
   (or `/output`)
-- `POST.json` — added after the meme is posted on X; not in this repo yet
+- `POST.json` — the X post URL for this meme
 
 ## License
 
