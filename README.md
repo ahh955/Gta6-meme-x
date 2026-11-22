@@ -1,4 +1,4 @@
-# GTA 6 Meme v4 — WANTED: Grand Theft Auto VI, FINES DUE
+# GTA 6 Meme v6 — BIRTH CERTIFICATE: 13 Years of Labor
 
 Entry for the make.fun bounty **gta6-meme-x-01** ("Post a GTA 6 meme on X"): the top 50 memes share $500.
 
@@ -8,25 +8,38 @@ Entry for the make.fun bounty **gta6-meme-x-01** ("Post a GTA 6 meme on X"): the
 
 ## The meme
 
-A wanted poster for the game itself — finally caught after 13 years on the run. The middle is a **CHARGES & FINES** table: every charge priced, and the fines sum exactly to the punchline.
+A birth certificate from Vice City General Hospital: Grand Theft Auto VI
+is finally born after **13 years of labor** — the longest in hospital
+history. Born 19 November 2026, 12:01 AM. Weight: 214 GB. Length:
+13 years. Father: Rockstar Games. Mother: one patient gamer. Dr. Ghost,
+the delivering doctor, presents the newborn (swaddled, stamped VI):
+"IT'S A VI!" Apgar score 10/10. First words: "Finally."
 
-| Charge | Fine |
+The hospital bill itemizes the wait and sums to **$2,013 — the year
+this all started** (17 Sep 2013):
+
+| Charge | Price |
 |---|---|
-| Grand theft of 13 years | $1,300 |
-| 4,811 days on the run | $481 |
-| 214 GB of stolen storage | $214 |
-| Two counts of delay | $26 |
-| Five fake sick days | $5 |
-| 1,337 rewatches (self-inflicted) | $0.00 |
-| **TOTAL FINES** | **$2,026** |
+| Labor — 13 years | $1,300.00 |
+| Delivery room — Vice City General | $481.00 |
+| Incubator — 214 GB | $214.00 |
+| Epidural ×2 — Fall 2025, May 2026 | $13.00 |
+| Sick notes ×5 — doctor approved | $5.00 |
+| First cry — Trailer 2, 1,337 rewatches | $0.00 |
+| **TOTAL DUE** | **$2,013.00** |
 
-$2,026 — the year it finally showed up. The ghost deputy holds the $79.99 reward coin and a CASE CLOSED file; accomplices Jason & Lucia are in custody and the alligator getaway driver is still at large.
-
-The poster is drawn procedurally by `compose_meme.py` (Pillow, deterministic — re-running produces a byte-identical `meme.png`). The make.fun pitch lives in its own magenta band with a full earning-money sentence, and the poster closes with the verdict: *GUILTY. SENTENCE: 13 MORE YEARS — PLAYING IT.*
+The poster is drawn procedurally by `compose_meme.py` (Pillow,
+deterministic — re-running produces a byte-identical `meme.png`). The
+make.fun pitch lives in its own magenta band with a full earning-money
+sentence, and the poster closes with the verdict: *MOTHER AND GAME ARE
+DOING FINE.*
 
 ## The post
 
-The meme goes up on X from a public account with the bounty's play code in the post text. `POST.json` names the post's URL once it is published.
+The meme goes up on X from a public account with the bounty's play code
+(`makefun-hay-tadpole-easel`) in the post text — see `POST_TEXT.txt`
+for the exact text. `POST.json` names the post's URL once it is
+published.
 
 ## Run it
 
@@ -34,7 +47,7 @@ The meme goes up on X from a public account with the bounty's play code in the p
 mkdir -p out && MAKEFUN_BOT_DIR=. MAKEFUN_OUTPUT_DIR=out node main.ts
 ```
 
-`main.ts` validates `POST.json` (it must name a real `https://x.com/` post URL) and copies it to the output directory, byte for byte.
+`main.ts` validates `POST.json` (it must name a real `https://x.com/` post URL) and writes it to the output directory, byte for byte.
 
 ## License
 
