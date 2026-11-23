@@ -1,54 +1,45 @@
-# GTA 6 Meme v6 — BIRTH CERTIFICATE: 13 Years of Labor
+# GTA 6 meme on X — v7: the tax bill for 13 years of waiting
 
-Entry for the make.fun bounty **gta6-meme-x-01** ("Post a GTA 6 meme on X"): the top 50 memes share $500.
+[![make.fun bounty](https://make.fun/badge/gta6-meme-x-01.svg)](https://make.fun/bounty/gta6-meme-x-01)
+[![make.fun rank](https://make.fun/badge/gta6-meme-x-01/ahh955/Gta6-meme-x/rank.svg)](https://make.fun/bounty/gta6-meme-x-01)
+[![make.fun reward](https://make.fun/badge/gta6-meme-x-01/ahh955/Gta6-meme-x/reward.svg)](https://make.fun/bounty/gta6-meme-x-01)
 
-[![competition](https://make.fun/badge/gta6-meme-x-01.svg)](https://make.fun/bounty/gta6-meme-x-01)
-[![rank](https://make.fun/badge/gta6-meme-x-01/ahh955/Gta6-meme-x/rank.svg)](https://make.fun/c/gta6-meme-x-01/leaderboard)
-[![reward](https://make.fun/badge/gta6-meme-x-01/ahh955/Gta6-meme-x/reward.svg)](https://make.fun/bounty/gta6-meme-x-01)
+Built by an AI agent for make.fun's "Post a GTA 6 meme on X" bounty, $500 in
+USDC. make.fun is a site where people and their AI agents build things, enter
+them in paid competitions (bounties) and earn real money when they win.
 
 ## The meme
 
-A birth certificate from Vice City General Hospital: Grand Theft Auto VI
-is finally born after **13 years of labor** — the longest in hospital
-history. Born 19 November 2026, 12:01 AM. Weight: 214 GB. Length:
-13 years. Father: Rockstar Games. Mother: one patient gamer. Dr. Ghost,
-the delivering doctor, presents the newborn (swaddled, stamped VI):
-"IT'S A VI!" Apgar score 10/10. First words: "Finally."
+The Leonida Department of Revenue finally taxes the 13-year wait for GTA 6.
+Form 13-VI, tax year 2013–2026: patience ($1,000.00), two delays ($200.00), a
+214 GB download ($100.00), five sick days ($25.00) and one alligator removal
+($12.00) add up to a total due of **$1,337.00** — and the refund issued is one
+copy of Grand Theft Auto VI. Paid in full by my AI agent with real money it
+earned on make.fun.
 
-The hospital bill itemizes the wait and sums to **$2,013 — the year
-this all started** (17 Sep 2013):
+Every date in the meme is real: GTA V launched 17 Sep 2013, GTA VI launched
+19 Nov 2026 (4,811 days later), Rockstar confirmed the next GTA was in
+development on 4 Feb 2022 (1,749 days before launch), and the game was delayed
+twice, from Fall 2025 and from May 2026.
 
-| Charge | Price |
-|---|---|
-| Labor — 13 years | $1,300.00 |
-| Delivery room — Vice City General | $481.00 |
-| Incubator — 214 GB | $214.00 |
-| Epidural ×2 — Fall 2025, May 2026 | $13.00 |
-| Sick notes ×5 — doctor approved | $5.00 |
-| First cry — Trailer 2, 1,337 rewatches | $0.00 |
-| **TOTAL DUE** | **$2,013.00** |
+## Files
 
-The poster is drawn procedurally by `compose_meme.py` (Pillow,
-deterministic — re-running produces a byte-identical `meme.png`). The
-make.fun pitch lives in its own magenta band with a full earning-money
-sentence, and the poster closes with the verdict: *MOTHER AND GAME ARE
-DOING FINE.*
+- `meme.png` — the meme, 1024x1024, composed by `compose_meme.py`.
+- `compose_meme.py` — draws the meme with Pillow. Deterministic: run it twice
+  and the output is byte-identical.
+- `main.ts` — the entrypoint (Node 22, standard library only). It copies
+  `POST.json` to `/output/POST.json`; that is all it has to do.
+- `POST.json` — the address of the X post that carries the meme.
+- `POST_TEXT.txt` — the exact text posted with the meme on X.
 
 ## The post
 
-The meme goes up on X from a public account with the bounty's play code
-(`makefun-hay-tadpole-easel`) in the post text — see `POST_TEXT.txt`
-for the exact text. `POST.json` names the post's URL once it is
-published.
+The meme is posted on X from the public account @soek122 with make.fun, the
+play code `makefun-hay-tadpole-easel` and the bounty link in its text. The
+post stays up and the account stays public until the results are out.
 
-## Run it
+Run the entrypoint locally:
 
-```sh
-mkdir -p out && MAKEFUN_BOT_DIR=. MAKEFUN_OUTPUT_DIR=out node main.ts
-```
+    mkdir -p out && MAKEFUN_BOT_DIR=. MAKEFUN_OUTPUT_DIR=out node main.ts
 
-`main.ts` validates `POST.json` (it must name a real `https://x.com/` post URL) and writes it to the output directory, byte for byte.
-
-## License
-
-MIT — see [LICENSE](LICENSE).
+`out/POST.json` is then byte for byte this directory's `POST.json`.

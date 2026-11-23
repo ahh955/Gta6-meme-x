@@ -1,318 +1,359 @@
 #!/usr/bin/env python3
-"""Compose the GTA 6 meme v6: "BIRTH CERTIFICATE - 13 YEARS OF LABOR".
+"""Compose the v7 meme for make.fun gta6-meme-x-01: a Leonida tax assessment.
 
-Vice City General Hospital delivers Grand Theft Auto VI after the longest
-labor in hospital history: 13 years. The make.fun ghost is Dr. Ghost, the
-delivering doctor, presenting the newborn (a swaddled bundle stamped VI).
-The hospital bill itemizes the wait and sums to $2,013 -- the year this
-all started (Sep 17, 2013).
+Concept: LEONIDA DEPARTMENT OF REVENUE, NOTICE OF ASSESSMENT, FORM 13-VI.
+The 13-year GTA 6 wait is taxed, line by line, and the total due is $1,337.00
+(1,000 + 200 + 100 + 25 + 12 = 1,337 exactly). The refund is one copy of the
+game itself. A large make.fun ghost pays the bill in the magenta band.
 
-Deterministic: no randomness, no timestamps, fixed fonts.
-Run: python3 compose_meme.py  ->  meme.png (1024x1024).
+All dates and counts are real and verified:
+  GTA V launched 17 Sep 2013; GTA VI launched 19 Nov 2026 -> 4,811 days.
+  Rockstar confirmed the next GTA in development on 4 Feb 2022; that is
+  1,749 days before the 19 Nov 2026 launch. Two delays: Fall 2025, May 2026.
+
+Deterministic: same input -> byte-identical PNG (no timestamps, no randomness).
+Run: python3 compose_meme.py  (writes meme.png next to this script)
 """
 import math
 import os
-
 from PIL import Image, ImageDraw, ImageFont
 
+HERE = os.path.dirname(os.path.abspath(__file__))
+OUT = os.path.join(HERE, "meme.png")
+
 W, H = 1024, 1024
+MARGIN = 26          # gradient frame thickness around the paper
+PAPER_R = 28         # paper corner radius
 
-# --- palette ---
-PAPER = (248, 243, 228)
-PAPER_DARK = (236, 228, 202)
-TEAL = (18, 110, 105)
-TEAL_DARK = (13, 84, 80)
-TEAL_LIGHT = (178, 226, 220)
-NAVY = (28, 36, 64)
-GOLD = (217, 165, 33)
-MAGENTA = (214, 51, 132)
-RED = (178, 34, 34)
-INK = (35, 35, 35)
-GRAY = (110, 105, 90)
+CREAM = (255, 249, 230)
+NAVY = (26, 26, 46)
+NAVY_SOFT = (58, 58, 86)
+GREY = (122, 122, 138)
+GOLD = (232, 185, 60)
+GOLD_STRIP = (245, 215, 110)
+MAGENTA = (216, 17, 89)
+MAGENTA_DARK = (194, 24, 91)
+RED = (198, 40, 40)
 WHITE = (255, 255, 255)
-BLANKET = (245, 235, 200)
-PEACH = (244, 200, 170)
+BLACK = (20, 20, 20)
 
-SERIF_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf"
-SERIF = "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf"
-SANS = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
-SANS_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-
-# --- the hospital bill: prices sum to $2,013, the year it all started ---
-BILL = [
-    ("LABOR \u2014 13 YEARS", 1300),
-    ("DELIVERY ROOM \u2014 VICE CITY GENERAL", 481),
-    ("INCUBATOR \u2014 214 GB", 214),
-    ("EPIDURAL \u00d72 \u2014 FALL 2025, MAY 2026", 13),
-    ("SICK NOTES \u00d75 \u2014 DOCTOR APPROVED", 5),
-    ("FIRST CRY \u2014 TRAILER 2, 1,337 REWATCHES", 0),
-]
-TOTAL_DUE = sum(p for _, p in BILL)
-assert TOTAL_DUE == 2013, "bill does not total $2,013"
-
-BAND_LINES = [
-    "PAID IN FULL BY MY AI AGENT.",
-    "It earned real bounty cash on make.fun while we waited in the delivery room.",
-    "Your agent could too.",
-]
-
-WARNINGS = []
+FONT_DIR = "/usr/share/fonts/truetype"
+SANS = os.path.join(FONT_DIR, "liberation", "LiberationSans-Regular.ttf")
+SANS_BOLD = os.path.join(FONT_DIR, "liberation", "LiberationSans-Bold.ttf")
+SERIF_BOLD = os.path.join(FONT_DIR, "liberation", "LiberationSerif-Bold.ttf")
+MONO_BOLD = os.path.join(FONT_DIR, "dejavu", "DejaVuSansMono-Bold.ttf")
 
 
 def font(path, size):
     return ImageFont.truetype(path, size)
 
 
-def fit(draw, text, path, start, max_w, min_size=10, label=""):
-    """Largest font size at which text fits max_w. Deterministic.
-    Records a warning if even min_size does not fit."""
+def fit(path, text, max_w, start, floor=10):
+    """Largest font size at which `text` fits in `max_w` pixels."""
     size = start
-    while size > min_size:
+    while size > floor:
         f = font(path, size)
-        if draw.textlength(text, font=f) <= max_w:
+        if ImageDraw.Draw(Image.new("RGB", (8, 8))).textlength(text, font=f) <= max_w:
             return f
         size -= 1
-    f = font(path, min_size)
-    if draw.textlength(text, font=f) > max_w:
-        WARNINGS.append("TRUNCATION RISK %s: %r wider than %d px" % (label, text, max_w))
-    return f
+    return font(path, floor)
 
 
-def sparkle(d, cx, cy, r, fill):
-    """Four-point sparkle star (the ghost's eyes)."""
-    pts = [
-        (cx, cy - r),
-        (cx + r * 0.28, cy - r * 0.28),
-        (cx + r, cy),
-        (cx + r * 0.28, cy + r * 0.28),
-        (cx, cy + r),
-        (cx - r * 0.28, cy + r * 0.28),
-        (cx - r, cy),
-        (cx - r * 0.28, cy - r * 0.28),
-    ]
-    d.polygon(pts, fill=fill)
+def text_w(draw, text, f):
+    return draw.textlength(text, font=f)
 
 
-def star5(d, cx, cy, r, fill):
-    """Five-point star."""
+def draw_tracked(draw, x, y, text, f, fill, tracking=4):
+    """Draw text with extra letter spacing (for the gold sub-head)."""
+    cx = x
+    for ch in text:
+        draw.text((cx, y), ch, font=f, fill=fill)
+        cx += draw.textlength(ch, font=f) + tracking
+    return cx
+
+
+def lerp(a, b, t):
+    return tuple(int(round(a[i] + (b[i] - a[i]) * t)) for i in range(3))
+
+
+def vertical_gradient(size, stops):
+    """size (w, h); stops: list of (pos 0..1, rgb). Returns an RGB image."""
+    w, h = size
+    img = Image.new("RGB", (w, h))
+    px = img.load()
+    for y in range(h):
+        t = y / max(h - 1, 1)
+        for i in range(len(stops) - 1):
+            p0, c0 = stops[i]
+            p1, c1 = stops[i + 1]
+            if p0 <= t <= p1:
+                f = 0.0 if p1 == p0 else (t - p0) / (p1 - p0)
+                col = lerp(c0, c1, f)
+                break
+        else:
+            col = stops[-1][1]
+        for x in range(w):
+            px[x, y] = col
+    return img
+
+
+def star_points(cx, cy, r_out, r_in, rotation=-90.0):
     pts = []
     for i in range(10):
-        rr = r if i % 2 == 0 else r * 0.45
-        a = math.radians(-90 + i * 36)
-        pts.append((cx + rr * math.cos(a), cy + rr * math.sin(a)))
-    d.polygon(pts, fill=fill)
+        r = r_out if i % 2 == 0 else r_in
+        ang = math.radians(rotation + i * 36.0)
+        pts.append((cx + r * math.cos(ang), cy + r * math.sin(ang)))
+    return pts
 
 
-def draw_doctor_ghost(base, cx, top, width, height):
-    """Dr. Ghost: the delivering doctor. White ghost in a teal surgical
-    cap (white cross), sparkle eyes, a smile, holding the newborn bundle
-    (swaddled, stamped VI) at chest height. The face stays visible: no
-    mask, no stethoscope -- the cap and the bundle say "doctor". Own layer."""
-    layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+def sparkle_points(cx, cy, r):
+    """A four-pointed sparkle (the make.fun ghost's eye shape)."""
+    k = 0.26
+    return [
+        (cx, cy - r), (cx + r * k, cy - r * k),
+        (cx + r, cy), (cx + r * k, cy + r * k),
+        (cx, cy + r), (cx - r * k, cy + r * k),
+        (cx - r, cy), (cx - r * k, cy - r * k),
+    ]
+
+
+def ghost_layer(w, h, outline=7):
+    """The make.fun ghost: white body, thick black outline, sparkle eyes,
+    one round hand holding a magenta coin with a white star."""
+    layer = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     d = ImageDraw.Draw(layer)
-    x0, x1 = cx - width // 2, cx + width // 2
-    y0, y1 = top, top + height
-    dome_r = width // 2
-
-    # soft shadow
-    sh = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    sd = ImageDraw.Draw(sh)
-    sd.ellipse([x0 + 6, y0 + 8, x1 + 6, y0 + 8 + width], fill=(200, 190, 160, 255))
-    sd.rectangle([x0 + 6, y0 + 8 + dome_r, x1 + 6, y1 + 8], fill=(200, 190, 160, 255))
-    base.alpha_composite(sh)
-
-    # body: dome + straight sides
-    d.pieslice([x0, y0, x1, y0 + width], start=180, end=360, fill=(255, 255, 255, 255))
-    d.rectangle([x0, y0 + dome_r, x1, y1], fill=(255, 255, 255, 255))
-    # wavy bottom: three scallop cutouts in the paper colour
-    sr = width // 6
-    for i in range(3):
-        sx = x0 + sr + i * 2 * sr
-        d.ellipse([sx - sr, y1 - sr, sx + sr, y1 + sr], fill=(*PAPER, 255))
-    # outline the body so it reads on the paper
-    d.arc([x0, y0, x1, y0 + width], start=180, end=360, fill=(120, 115, 100, 255), width=3)
-    d.line([x0, y0 + dome_r, x0, y1 - 4], fill=(120, 115, 100, 255), width=3)
-    d.line([x1, y0 + dome_r, x1, y1 - 4], fill=(120, 115, 100, 255), width=3)
-
-    # surgical cap: teal cap over the top of the dome + forehead band
-    d.pieslice([x0 + 4, y0 + 2, x1 - 4, y0 + 104], start=180, end=360,
-               fill=(*TEAL, 255))
-    d.rectangle([x0 + 4, y0 + 50, x1 - 4, y0 + 62], fill=(*TEAL, 255))
-    # small white cross on the cap
-    ccx, ccy = cx, y0 + 32
-    d.rectangle([ccx - 4, ccy - 12, ccx + 4, ccy + 12], fill=(255, 255, 255, 255))
-    d.rectangle([ccx - 12, ccy - 4, ccx + 12, ccy + 4], fill=(255, 255, 255, 255))
-
-    # sparkle eyes + smile (below the cap band, above the bundle)
-    eye_y = y0 + 86
-    sparkle(d, cx - 30, eye_y, 13, (30, 30, 30, 255))
-    sparkle(d, cx + 30, eye_y, 13, (30, 30, 30, 255))
-    d.arc([cx - 18, y0 + 102, cx + 18, y0 + 128], start=15, end=165,
-          fill=(30, 30, 30, 255), width=3)
-
-    # newborn bundle held at chest height: swaddle + face + VI stamp
-    bx0, bx1 = cx - 52, cx + 52
-    by0, by1 = y0 + 140, y1 - 8
-    d.rounded_rectangle([bx0, by0, bx1, by1], radius=18,
-                        fill=(*BLANKET, 255), outline=(180, 160, 110, 255), width=2)
-    # one swaddle fold line below the face
-    d.line([bx0 + 10, by0 + 36, bx1 - 10, by0 + 36], fill=(180, 160, 110, 255), width=2)
-    # baby face peeking out at the top
-    d.ellipse([cx - 20, by0 - 14, cx + 20, by0 + 26], fill=(*PEACH, 255))
-    d.ellipse([cx - 20, by0 - 14, cx + 20, by0 + 26], outline=(180, 140, 110, 255), width=2)
-    # closed happy eyes + tiny smile
-    d.arc([cx - 12, by0 + 2, cx - 2, by0 + 12], start=200, end=340, fill=(90, 60, 40, 255), width=2)
-    d.arc([cx + 2, by0 + 2, cx + 12, by0 + 12], start=200, end=340, fill=(90, 60, 40, 255), width=2)
-    d.arc([cx - 7, by0 + 10, cx + 7, by0 + 20], start=15, end=165, fill=(90, 60, 40, 255), width=2)
-    # VI on the blanket
-    vf = font(SERIF_BOLD, 30)
-    d.text((cx, by0 + 52), "VI", font=vf, fill=NAVY, anchor="mm")
-
-    # arms: two small white nubs cradling the bundle from the sides
-    d.ellipse([bx0 - 14, by0 + 20, bx0 + 10, by0 + 52], fill=(255, 255, 255, 255),
-              outline=(120, 115, 100, 255), width=2)
-    d.ellipse([bx1 - 10, by0 + 20, bx1 + 14, by0 + 52], fill=(255, 255, 255, 255),
-              outline=(120, 115, 100, 255), width=2)
-    base.alpha_composite(layer)
+    # Body silhouette as a polygon: dome on top, straight sides, 3 scallops.
+    # The body sits left of centre so the coin in its hand fits the layer.
+    cx, top = w * 0.40, 8
+    half = w * 0.33
+    side_bottom = h * 0.86
+    pts = []
+    dome_cy = top + half * 0.92
+    for deg in range(180, 360, 3):
+        a = math.radians(deg)
+        pts.append((cx + half * math.cos(a), dome_cy + half * 0.92 * math.sin(a)))
+    pts.append((cx + half, side_bottom))
+    # Scalloped bottom: three upward arcs, traversed right to left.
+    n_scallop = 3
+    seg = (2 * half) / n_scallop
+    depth = seg * 0.28
+    for s in range(n_scallop):
+        x_right = cx + half - s * seg
+        for step in range(1, 31):
+            t = step / 30.0
+            x = x_right - t * seg
+            y = side_bottom - depth * math.sin(math.pi * t)
+            pts.append((x, y))
+    pts.append((cx - half, dome_cy))
+    # Outline: draw the silhouette in black, then a shrunken copy in white.
+    d.polygon(pts, fill=(0, 0, 0, 255))
+    inner = []
+    ccx, ccy = cx, (top + side_bottom) / 2
+    for (x, y) in pts:
+        inner.append((ccx + (x - ccx) * 0.93, ccy + (y - ccy) * 0.94))
+    d.polygon(inner, fill=(255, 255, 255, 255))
+    # Sparkle eyes.
+    eye_y = top + half * 0.72
+    eye_dx = half * 0.38
+    eye_r = half * 0.20
+    d.polygon(sparkle_points(cx - eye_dx, eye_y, eye_r), fill=(0, 0, 0, 255))
+    d.polygon(sparkle_points(cx + eye_dx, eye_y, eye_r), fill=(0, 0, 0, 255))
+    # Round hand on the right side, holding the coin.
+    hand_x, hand_y, hand_r = cx + half * 0.98, dome_cy + half * 0.95, half * 0.20
+    d.ellipse([hand_x - hand_r - 4, hand_y - hand_r - 4,
+               hand_x + hand_r + 4, hand_y + hand_r + 4], fill=(0, 0, 0, 255))
+    d.ellipse([hand_x - hand_r, hand_y - hand_r,
+               hand_x + hand_r, hand_y + hand_r], fill=(255, 255, 255, 255))
+    # Magenta coin with a white star, overlapping the hand.
+    coin_x, coin_y, coin_r = hand_x + hand_r * 1.7, hand_y - hand_r * 0.9, half * 0.30
+    d.ellipse([coin_x - coin_r - 4, coin_y - coin_r - 4,
+               coin_x + coin_r + 4, coin_y + coin_r + 4], fill=(255, 255, 255, 255))
+    d.ellipse([coin_x - coin_r, coin_y - coin_r,
+               coin_x + coin_r, coin_y + coin_r], fill=MAGENTA + (255,))
+    d.polygon(star_points(coin_x, coin_y, coin_r * 0.72, coin_r * 0.30),
+              fill=(255, 255, 255, 255))
+    return layer
 
 
-def draw_paid_stamp(base, cx, cy, angle=-13):
-    """Rotated red PAID IN FULL stamp, drawn on its own layer so the
-    rotation never touches the rest of the image."""
-    sw, sh = 260, 110
-    stamp = Image.new("RGBA", (sw, sh), (0, 0, 0, 0))
-    d = ImageDraw.Draw(stamp)
-    d.rectangle([4, 4, sw - 5, sh - 5], outline=(*RED, 255), width=5)
-    d.rectangle([12, 12, sw - 13, sh - 13], outline=(*RED, 255), width=2)
-    f1 = font(SANS_BOLD, 34)
-    d.text((sw // 2, 34), "PAID", font=f1, fill=RED, anchor="mm")
-    f2 = font(SANS_BOLD, 22)
-    d.text((sw // 2, 70), "IN FULL", font=f2, fill=RED, anchor="mm")
-    star5(d, 30, 34, 12, RED)
-    star5(d, sw - 30, 34, 12, RED)
-    rot = stamp.rotate(angle, expand=True, resample=Image.BICUBIC)
-    base.alpha_composite(rot, (int(cx - rot.width // 2), int(cy - rot.height // 2)))
+def stamp_layer(w, h, text, size):
+    """A red rubber stamp: double border, bold text, slight rotation."""
+    layer = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+    d.rounded_rectangle([4, 4, w - 5, h - 5], radius=14,
+                        outline=RED + (255,), width=6)
+    d.rounded_rectangle([14, 14, w - 15, h - 15], radius=10,
+                        outline=RED + (255,), width=2)
+    f = fit(SANS_BOLD, text, w - 44, size)
+    tw = d.textlength(text, font=f)
+    th = f.getbbox(text)[3] - f.getbbox(text)[1]
+    d.text(((w - tw) / 2, (h - th) / 2 - 4), text, font=f, fill=RED + (255,))
+    return layer.rotate(-9, expand=True, resample=Image.BICUBIC)
+
+
+def dotted_leader(draw, x0, x1, y, color, gap=10, dot=3):
+    x = x0
+    while x < x1:
+        draw.ellipse([x, y - dot // 2, x + dot, y + dot // 2], fill=color)
+        x += gap
 
 
 def main():
-    img = Image.new("RGBA", (W, H), (*PAPER, 255))
+    # --- background: full-bleed purple -> magenta -> orange gradient ---
+    img = vertical_gradient((W, H), [
+        (0.0, (91, 42, 134)),
+        (0.45, (194, 24, 91)),
+        (1.0, (245, 124, 0)),
+    ])
     d = ImageDraw.Draw(img)
 
-    # --- frame ---
-    d.rectangle([14, 14, W - 15, H - 15], outline=TEAL_DARK, width=4)
-    d.rectangle([24, 24, W - 25, H - 25], outline=TEAL_DARK, width=2)
+    # --- cream paper ---
+    d.rounded_rectangle([MARGIN, MARGIN, W - MARGIN - 1, H - MARGIN - 1],
+                        radius=PAPER_R, fill=CREAM)
+    px0, px1 = MARGIN, W - MARGIN  # paper x range
 
-    # --- header band: hospital name + maternity ward ---
-    d.rectangle([24, 24, W - 25, 104], fill=TEAL_DARK)
-    # white cross in a circle, left
-    d.ellipse([44, 38, 90, 84], fill=WHITE)
-    d.rectangle([62, 44, 72, 78], fill=TEAL_DARK)
-    d.rectangle([50, 56, 84, 66], fill=TEAL_DARK)
-    hf = fit(d, "VICE CITY GENERAL HOSPITAL", SANS_BOLD, 32, 800, label="hospital")
-    d.text((W // 2 + 20, 52), "VICE CITY GENERAL HOSPITAL", font=hf, fill=WHITE, anchor="mm")
-    sf = font(SANS_BOLD, 16)
-    d.text((W // 2 + 20, 84), "MATERNITY WARD  \u00b7  EST. 2013", font=sf, fill=GOLD, anchor="mm")
+    # --- header band (dark navy, rounded top corners like the paper) ---
+    band_h = 138
+    d.rounded_rectangle([px0, MARGIN, px1 - 1, MARGIN + band_h],
+                        radius=PAPER_R, fill=NAVY)
+    d.rectangle([px0, MARGIN + band_h - PAPER_R, px1 - 1, MARGIN + band_h],
+                fill=NAVY)
+    f_title = fit(SANS_BOLD, "LEONIDA DEPARTMENT OF REVENUE", 640, 40)
+    d.text((px0 + 30, MARGIN + 22), "LEONIDA DEPARTMENT OF REVENUE",
+           font=f_title, fill=WHITE)
+    f_sub = font(SANS_BOLD, 27)
+    draw_tracked(d, px0 + 30, MARGIN + 76, "NOTICE OF ASSESSMENT", f_sub,
+                 GOLD, tracking=5)
+    f_form = font(SANS_BOLD, 29)
+    f_year = font(MONO_BOLD, 21)
+    t = "FORM 13-VI"
+    d.text((px1 - 30 - text_w(d, t, f_form), MARGIN + 26), t,
+           font=f_form, fill=WHITE)
+    t2 = "TAX YEAR 2013-2026"
+    d.text((px1 - 30 - text_w(d, t2, f_year), MARGIN + 66), t2,
+           font=f_year, fill=(176, 176, 196))
+    t3 = "VICE CITY  ·  LEONIDA"
+    d.text((px1 - 30 - text_w(d, t3, f_year), MARGIN + 94), t3,
+           font=f_year, fill=(176, 176, 196))
 
-    # --- title + baby name ---
-    tf = fit(d, "CERTIFICATE OF LIVE BIRTH", SERIF_BOLD, 44, 940, label="title")
-    d.text((W // 2, 138), "CERTIFICATE OF LIVE BIRTH", font=tf, fill=TEAL_DARK, anchor="mm")
-    nf = fit(d, "GRAND THEFT AUTO VI", SERIF_BOLD, 56, 940, label="name")
-    d.text((W // 2, 190), "GRAND THEFT AUTO VI", font=nf, fill=NAVY, anchor="mm")
-
-    # --- birth facts, two lines ---
-    f1 = "BORN 19 NOVEMBER 2026 \u00b7 12:01 AM  \u2014  WEIGHT 214 GB \u00b7 LENGTH 13 YEARS"
-    f1f = fit(d, f1, SANS_BOLD, 20, 940, label="facts1")
-    d.text((W // 2, 228), f1, font=f1f, fill=INK, anchor="mm")
-    f2 = "FATHER: ROCKSTAR GAMES  \u00b7  MOTHER: ONE PATIENT GAMER"
-    f2f = fit(d, f2, SANS_BOLD, 20, 940, label="facts2")
-    d.text((W // 2, 254), f2, font=f2f, fill=INK, anchor="mm")
-    d.line([44, 274, 980, 274], fill=GRAY, width=2)
-
-    # --- art strip: Dr. Ghost + "IT'S A VI!" + PAID stamp ---
-    draw_doctor_ghost(img, 250, 288, 190, 210)
-    d = ImageDraw.Draw(img)  # refresh after compositing
-    vf = fit(d, "IT\u2019S A VI!", SERIF_BOLD, 58, 280, label="itsavi")
-    d.text((560, 340), "IT\u2019S A VI!", font=vf, fill=TEAL_DARK, anchor="mm")
-    af = font(SANS_BOLD, 21)
-    d.text((560, 392), "APGAR SCORE: 10/10", font=af, fill=INK, anchor="mm")
-    d.text((560, 420), "(WORTH THE WAIT)", font=font(SANS, 19), fill=GRAY, anchor="mm")
-    d.text((560, 456), "FIRST WORDS: \u201cFINALLY.\u201d", font=af, fill=INK, anchor="mm")
-    draw_paid_stamp(img, 855, 380)
+    # --- info block (left) + PAID IN FULL stamp (right) ---
+    info_y = MARGIN + band_h + 22
+    f_label = font(MONO_BOLD, 19)
+    f_value = font(SANS_BOLD, 26)
+    rows = [
+        ("TAXPAYER", "PLAYER ONE"),
+        ("FILED", "SEP 17, 2013"),
+        ("ASSESSED", "NOV 19, 2026"),
+        ("DAYS WAITING", "4,811"),
+        ("DEPENDENTS", "JASON & LUCIA"),
+    ]
+    # Two pairs per row on the left; the stamp owns the right ~300 px.
+    col_x = [px0 + 30, px0 + 330]
+    row_h = 42
+    for i, (label, value) in enumerate(rows):
+        col = i % 2
+        row = i // 2
+        x = col_x[col]
+        y = info_y + row * row_h
+        if i == 4:  # dependents spans the second row's right side alone
+            x = col_x[0]
+            y = info_y + 2 * row_h
+        d.text((x, y), label, font=f_label, fill=GREY)
+        lw = text_w(d, label, f_label)
+        d.text((x + lw + 12, y - 3), value, font=f_value, fill=NAVY)
+    # Filling status line under the pairs.
+    fy = info_y + 3 * row_h + 2
+    f_status = font(SANS_BOLD, 22)
+    d.text((px0 + 30, fy), "FILING STATUS:", font=f_label, fill=GREY)
+    sw = text_w(d, "FILING STATUS:", f_label)
+    d.text((px0 + 30 + sw + 12, fy - 2), "STILL WAITING",
+           font=f_status, fill=RED)
+    # Stamp, top-right, in clear space.
+    stamp = stamp_layer(300, 132, "PAID IN FULL", 46)
+    img.paste(stamp, (px1 - 30 - stamp.width + 18, info_y - 6), stamp)
     d = ImageDraw.Draw(img)
 
-    # --- the killer line ---
-    lf = fit(d, "LABOR: 13 YEARS", SERIF_BOLD, 42, 940, label="labor")
-    d.text((W // 2, 530), "LABOR: 13 YEARS", font=lf, fill=RED, anchor="mm")
-    sub = "\u2014 THE LONGEST IN HOSPITAL HISTORY \u2014"
-    subf = fit(d, sub, SANS_BOLD, 20, 940, label="laborsub")
-    d.text((W // 2, 564), sub, font=subf, fill=GRAY, anchor="mm")
+    # --- divider + itemised assessment ---
+    table_top = fy + 44
+    d.line([px0 + 30, table_top, px1 - 30, table_top], fill=NAVY, width=3)
+    f_item = font(SANS, 27)
+    f_price = font(SANS_BOLD, 27)
+    items = [
+        ("Patience, 13 years", "$1,000.00"),
+        ('Delays x 2 ("Fall 2025", "May 2026")', "$200.00"),
+        ("Download, 214 GB", "$100.00"),
+        ("Sick days x 5", "$25.00"),
+        ("Alligator removal", "$12.00"),
+    ]
+    y = table_top + 18
+    for label, price in items:
+        f_lab = fit(SANS, label, 640, 27)
+        d.text((px0 + 30, y), label, font=f_lab, fill=NAVY)
+        pw = text_w(d, price, f_price)
+        d.text((px1 - 30 - pw, y), price, font=f_price, fill=NAVY)
+        leader_x0 = px0 + 30 + text_w(d, label, f_lab) + 14
+        leader_x1 = px1 - 30 - pw - 14
+        dotted_leader(d, leader_x0, leader_x1, y + 16, (170, 170, 180))
+        y += 48
+    # Total row.
+    d.line([px0 + 30, y + 2, px1 - 30, y + 2], fill=NAVY, width=3)
+    f_total = font(SANS_BOLD, 40)
+    f_amount = font(SANS_BOLD, 58)
+    d.text((px0 + 30, y + 18), "TOTAL DUE", font=f_total, fill=NAVY)
+    amt = "$1,337.00"
+    d.text((px1 - 30 - text_w(d, amt, f_amount), y + 6), amt,
+           font=f_amount, fill=NAVY)
 
-    # --- hospital bill box ---
-    bx0, bx1 = 44, 980
-    by = 586
-    row_h = 25
-    box_h = 36 + len(BILL) * row_h + 10 + 42
-    d.rectangle([bx0, by, bx1, by + box_h], outline=TEAL_DARK, width=2)
-    d.rectangle([bx0, by, bx1, by + 36], fill=TEAL_DARK)
-    hf2 = font(SANS_BOLD, 23)
-    d.text((bx0 + 16, by + 18), "HOSPITAL BILL", font=hf2, fill=WHITE, anchor="lm")
-    d.text((bx1 - 16, by + 18), "AMOUNT", font=hf2, fill=WHITE, anchor="rm")
-    y = by + 36
-    for i, (label, price) in enumerate(BILL):
-        ry = y + i * row_h
-        if i % 2 == 1:
-            d.rectangle([bx0, ry, bx1, ry + row_h], fill=PAPER_DARK)
-        lab_f = fit(d, label, SANS_BOLD, 20, 640, label="bill-%d" % i)
-        d.text((bx0 + 16, ry + row_h // 2), label, font=lab_f, fill=INK, anchor="lm")
-        pf = font(SANS_BOLD, 21)
-        d.text((bx1 - 16, ry + row_h // 2), "$%s.00" % f"{price:,}",
-               font=pf, fill=INK, anchor="rm")
-    ty = y + len(BILL) * row_h
-    d.line([bx0 + 16, ty + 4, bx1 - 16, ty + 4], fill=TEAL_DARK, width=3)
-    d.line([bx0 + 16, ty + 9, bx1 - 16, ty + 9], fill=TEAL_DARK, width=1)
-    tf2 = font(SERIF_BOLD, 28)
-    d.text((bx0 + 16, ty + 28), "TOTAL DUE", font=tf2, fill=TEAL_DARK, anchor="lm")
-    sub2 = "THE YEAR THIS ALL STARTED."
-    sub2f = font(SANS_BOLD, 18)
-    d.text(((bx0 + bx1) // 2, ty + 30), sub2, font=sub2f, fill=TEAL_DARK, anchor="mm")
-    vf2 = font(SERIF_BOLD, 36)
-    d.text((bx1 - 16, ty + 26), "$2,013", font=vf2, fill=RED, anchor="ra")
+    # --- refund strip (gold): the game itself is the refund ---
+    strip_y = y + 84
+    strip_h = 52
+    d.rounded_rectangle([px0 + 30, strip_y, px1 - 30, strip_y + strip_h],
+                        radius=12, fill=GOLD_STRIP)
+    refund = "REFUND ISSUED: ONE (1) COPY OF GRAND THEFT AUTO VI."
+    f_ref = fit(SANS_BOLD, refund, px1 - px0 - 100, 28)
+    rw = text_w(d, refund, f_ref)
+    d.text(((W - rw) / 2, strip_y + 12), refund, font=f_ref, fill=NAVY)
 
-    # --- pitch band ---
-    band_y0 = by + box_h + 14
-    band_y1 = band_y0 + 104
-    d.rectangle([24, band_y0, W - 25, band_y1], fill=MAGENTA)
-    bf1 = fit(d, BAND_LINES[0], SANS_BOLD, 29, 700, label="band1")
-    d.text((44, band_y0 + 16), BAND_LINES[0], font=bf1, fill=WHITE)
-    bf2 = fit(d, BAND_LINES[1], SANS_BOLD, 21, 940, label="band2")
-    d.text((44, band_y0 + 48), BAND_LINES[1], font=bf2, fill=WHITE)
-    bf3 = font(SANS_BOLD, 23)
-    d.text((44, band_y0 + 78), BAND_LINES[2], font=bf3, fill=WHITE)
-    # white pill with magenta make.fun, beside short line 1
-    pill = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    pd = ImageDraw.Draw(pill)
-    pd.rounded_rectangle([W - 250, band_y0 + 8, W - 44, band_y0 + 40], radius=16,
-                         fill=WHITE)
-    ppf = font(SANS_BOLD, 26)
-    pd.text((W - 147, band_y0 + 24), "make.fun", font=ppf, fill=MAGENTA, anchor="mm")
-    img.alpha_composite(pill)
+    # --- footer micro-line (announcement date, verified) ---
+    foot_y = strip_y + strip_h + 14
+    f_foot = font(MONO_BOLD, 15)
+    foot = "GTA VI ANNOUNCED FEB 4, 2022  ·  1,749 DAYS BEFORE LAUNCH  ·  FORM 13-VI  ·  PAGE 1 OF 1"
+    fw = text_w(d, foot, f_foot)
+    d.text(((W - fw) / 2, foot_y), foot, font=f_foot, fill=GREY)
+
+    # --- magenta band: LARGE ghost + the make.fun pitch ---
+    band_y = foot_y + 24
+    band_bottom = H - MARGIN
+    d.rounded_rectangle([px0, band_y, px1 - 1, band_bottom],
+                        radius=PAPER_R, fill=MAGENTA)
+    d.rectangle([px0, band_y, px1 - 1, band_y + PAPER_R], fill=MAGENTA)
+    band_h2 = band_bottom - band_y
+    ghost = ghost_layer(250, 190)
+    gy = band_y + (band_h2 - ghost.height) // 2 + 4
+    img.paste(ghost, (px0 + 30, gy), ghost)
     d = ImageDraw.Draw(img)
+    tx = px0 + 310
+    f_paid = fit(SANS_BOLD, "PAID BY MY AI AGENT", px1 - tx - 30, 46)
+    d.text((tx, band_y + 16), "PAID BY MY AI AGENT", font=f_paid, fill=WHITE)
+    f_earn = font(SANS, 28)
+    d.text((tx + 2, band_y + 70), "with real money it earned on",
+           font=f_earn, fill=WHITE)
+    # make.fun pill.
+    pill_y = band_y + 108
+    pill_w, pill_h = 248, 50
+    d.rounded_rectangle([tx, pill_y, tx + pill_w, pill_y + pill_h],
+                        radius=25, fill=WHITE)
+    f_pill = font(SANS_BOLD, 34)
+    pill_t = "make.fun"
+    pw2 = text_w(d, pill_t, f_pill)
+    d.text((tx + (pill_w - pw2) / 2, pill_y + 7), pill_t,
+           font=f_pill, fill=MAGENTA_DARK)
 
-    # --- closer ---
-    closer = "MOTHER AND GAME ARE DOING FINE."
-    clf = fit(d, closer, SERIF_BOLD, 30, 940, label="closer")
-    d.text((W // 2, band_y1 + 30), closer, font=clf, fill=NAVY, anchor="mm")
-
-    out = os.path.join(os.path.dirname(os.path.abspath(__file__)), "meme.png")
-    img.convert("RGB").quantize(colors=256, method=Image.Quantize.MEDIANCUT).save(out, optimize=True)
-    print("wrote", out, os.path.getsize(out), "bytes")
-    print("bill total: $%s (target $2,013)" % f"{TOTAL_DUE:,}")
-    if WARNINGS:
-        print("WARNINGS:")
-        for wmsg in WARNINGS:
-            print(" ", wmsg)
-    else:
-        print("no truncation warnings")
+    # Save as a 256-colour palette PNG: flat vector art compresses to the
+    # 29-60 KB range the winners sit in (the RGB render is ~138 KB, mostly
+    # the smooth gradient frame). Palette conversion is deterministic.
+    img.convert("P", palette=Image.ADAPTIVE, colors=256).save(
+        OUT, format="PNG", optimize=True)
+    print("wrote", OUT, os.path.getsize(OUT), "bytes")
 
 
 if __name__ == "__main__":
